@@ -35,7 +35,7 @@ ALLOWED_ORIGINS = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"^https?://([a-zA-Z0-9-]+\.)*(tezhost\.com|onrender\.com|loca\.lt|lhr\.life|localhost\.run)(:[0-9]+)?$",
+    allow_origin_regex=r"^https?://([a-zA-Z0-9-]+\.)*(tezhost\.com|fly\.dev|onrender\.com|loca\.lt|lhr\.life|localhost\.run)(:[0-9]+)?$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
