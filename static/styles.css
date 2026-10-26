@@ -1,0 +1,152 @@
+/* Hallmark · shape: workbench · genre: modern-minimal · theme: custom · job: try · idea: "PHP multipart memory exhaustion scanner and server security auditor" · vibe: "clinical, exact, utilitarian, rigorous infrastructure security"
+ * paper: oklch(0.99 0.005 250) · accent: oklch(0.48 0.22 260) · display: Plus Jakarta Sans · body: Plus Jakarta Sans · hero: "plain headline and direct input form beside live telemetry" · nav: "dense balanced bar" · footer: "minimal border" · imagery: "product telemetry and configuration workbench" · signature: "live 4-stage recursive multipart execution trail"
+ * axes: light/grotesk-sans/neutral · posture: restrained · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · weakest: S, honed directly for Tezhost security workbench */
+/* Hallmark · dismissed 74 · modern-minimal palette utilities extend declared OKLCH token mappings · production uses CDN Tailwind classes */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url("./tokens.css");
+
+html, body {
+  overflow-x: clip;
+  width: 100%;
+}
+
+::selection {
+  background: var(--color-accent-subtle);
+  color: var(--color-ink);
+}
+
+* {
+  font-family: var(--font-body);
+  box-sizing: border-box;
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-mono) !important;
+}
+
+body {
+  background-color: var(--color-paper-2);
+  color: var(--color-ink);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  caret-color: var(--color-accent);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-paper-3);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-rule);
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted);
+}
+
+/* Cards & Surfaces */
+.card-premium {
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out);
+}
+
+.card-premium:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.card-flat {
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-card);
+}
+
+/* Navigation Pill */
+.nav-pill-active {
+  background-color: var(--color-accent-subtle) !important;
+  color: var(--color-accent) !important;
+  border-color: var(--color-rule-subtle) !important;
+  font-weight: 600 !important;
+}
+
+/* Interactive States */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+button:active:not(:disabled), input[type="button"]:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+button:disabled, input:disabled, textarea:disabled, select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Transitions */
+.view-panel {
+  animation: viewFade var(--dur-short) var(--ease-out);
+}
+
+@keyframes viewFade {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==================== MOBILE & TOUCH OPTIMIZATIONS ==================== */
+/* Remove 300ms mobile tap delay & clean tap highlights */
+button, a, input, select, textarea, label, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Momentum scrolling on iOS devices */
+.overflow-x-auto, .overflow-y-auto, nav {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbars on sleek swipeable mobile pill navigations */
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Prevent unwanted iOS Safari auto-zoom on input focus */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="url"],
+  input[type="email"],
+  input[type="search"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Safe area handling for modern iPhone home indicator */
+  footer {
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+  }
+}

@@ -1,0 +1,22 @@
+services:
+  phpscanner:
+    build: .
+    container_name: tezhost-phpscanner
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - HOST=0.0.0.0
+      - PORT=8000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - tezhost-net
+
+networks:
+  tezhost-net:
+    driver: bridge

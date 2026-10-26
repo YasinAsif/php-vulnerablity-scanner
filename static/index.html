@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <title>PHPscanner | Tezhost Enterprise PHP Security & Threat Intelligence</title>
+  <meta name="description" content="Check your website for PHP multipart recursion memory exhaustion (CVE-2026-109618 & CVE-2026-109619). Non-destructive inspection powered by Tezhost Infrastructure and Assetnote research.">
+  
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-blue-100 selection:text-blue-800">
+
+  <!-- Top Global Security Advisory Bar -->
+  <div class="bg-slate-900 text-white text-xs py-2 px-4 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center space-x-2">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-600 text-white">Advisory</span>
+        <span class="text-slate-300">CVE-2026-109618 and CVE-2026-109619 (CVSS 9.2): PHP multipart memory exhaustion in PHP-FPM / mod_php.</span>
+      </div>
+      <div class="flex items-center space-x-4 text-xs font-medium text-slate-400">
+        <button onclick="navigateTo('cve')" class="hover:text-white transition underline whitespace-nowrap">Technical briefing</button>
+        <span>•</span>
+        <span class="flex items-center space-x-1.5 text-emerald-400 font-semibold">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Engine Online</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Primary Navigation (Clean, Crisp, Solid Modern Minimal) -->
+  <header class="bg-white sticky top-0 z-50 border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between py-2.5 md:py-0 md:h-16 gap-2 md:gap-4">
+        
+        <!-- Brand Row on Mobile (Logo + CTA) -->
+        <div class="flex items-center justify-between shrink-0">
+          <a href="javascript:void(0)" onclick="navigateTo('scanner')" class="flex items-center space-x-2.5 group">
+            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-sm group-hover:bg-blue-700 transition">
+              <i class="fa-solid fa-shield-halved text-xs sm:text-sm"></i>
+            </div>
+            <div>
+              <div class="text-base sm:text-lg font-bold tracking-tight text-slate-900 leading-none">Tez<span class="text-blue-600">host</span></div>
+              <div class="text-[10px] sm:text-xs font-medium text-slate-400">PHP Scanner</div>
+            </div>
+          </a>
+
+          <!-- Mobile Only Header CTA -->
+          <div class="md:hidden flex items-center space-x-2">
+            <a href="https://tezhost.com" target="_blank" class="text-xs font-semibold text-slate-600 hover:text-blue-600 transition flex items-center space-x-1 whitespace-nowrap px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50">
+              <span>Tezhost</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs (Native Touch-Swipe Ribbon on Mobile, Crisp Bar on Desktop) -->
+        <nav class="flex items-center space-x-1.5 overflow-x-auto py-1 text-xs font-semibold scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 scroll-smooth" id="mainNav">
+          <button onclick="navigateTo('scanner')" id="nav-scanner" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg nav-pill-active border border-transparent transition whitespace-nowrap flex items-center space-x-1.5 shrink-0">
+            <i class="fa-solid fa-radar"></i>
+            <span>Scanner</span>
+          </button>
+          <button onclick="navigateTo('auditor')" id="nav-auditor" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent transition whitespace-nowrap flex items-center space-x-1.5 shrink-0">
+            <i class="fa-solid fa-file-code"></i>
+            <span>Config Auditor</span>
+          </button>
+          <button onclick="navigateTo('payload')" id="nav-payload" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent transition whitespace-nowrap flex items-center space-x-1.5 shrink-0">
+            <i class="fa-solid fa-flask"></i>
+            <span>Payload Lab</span>
+          </button>
+          <button onclick="navigateTo('cve')" id="nav-cve" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent transition whitespace-nowrap flex items-center space-x-1.5 shrink-0">
+            <i class="fa-solid fa-book-skull"></i>
+            <span>CVE Intel</span>
+          </button>
+          <button onclick="navigateTo('remediation')" id="nav-remediation" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent transition whitespace-nowrap flex items-center space-x-1.5 shrink-0">
+            <i class="fa-solid fa-wrench"></i>
+            <span>Remediation</span>
+          </button>
+          <button onclick="navigateTo('badge')" id="nav-badge" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent transition whitespace-nowrap flex items-center space-x-1.5 shrink-0">
+            <i class="fa-solid fa-certificate"></i>
+            <span>Trust Badge</span>
+          </button>
+          <button onclick="navigateTo('api')" id="nav-api" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent transition whitespace-nowrap flex items-center space-x-1.5 shrink-0">
+            <i class="fa-solid fa-code"></i>
+            <span>API Docs</span>
+          </button>
+        </nav>
+
+        <!-- Right Action CTA (Desktop) -->
+        <div class="hidden md:flex items-center space-x-3 shrink-0">
+          <a href="https://tezhost.com" target="_blank" class="text-xs font-semibold text-slate-500 hover:text-blue-600 transition flex items-center space-x-1 whitespace-nowrap">
+            <span>Tezhost Cloud</span>
+            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+
+  <!-- ==================== VIEW 1: VULNERABILITY SCANNER ==================== -->
+  <main id="view-scanner" class="view-panel flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-10">
+    
+    <!-- Hero Header -->
+    <div class="text-center max-w-2xl mx-auto space-y-2 sm:space-y-3">
+      <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
+        Inspect PHP servers for multipart memory exhaustion
+      </h1>
+      <p class="text-slate-600 text-xs sm:text-base leading-relaxed">
+        Probe workers for recursive array allocation failure and dangling pointer conditions.
+      </p>
+    </div>
+
+    <!-- The Primary Scanner Card (Centerpiece) -->
+    <div class="card-premium p-4 sm:p-8 space-y-5 sm:space-y-6">
+      
+      <!-- Card Top Bar: Header & Research Credit -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">Check your website</h2>
+          <p class="text-xs text-slate-500">Non-invasive inspection &bull; RFC 7578 multipart recursion analysis</p>
+        </div>
+        <div class="text-xs text-slate-500 font-medium">
+          <span class="text-slate-400 text-xs font-medium mr-1">Credits:</span>
+          <a href="https://github.com/assetnote/php2shell-scanner" target="_blank" class="text-blue-600 hover:underline">Assetnote Research</a>
+        </div>
+      </div>
+
+      <!-- Quick Presets -->
+      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1 text-xs">
+        <span class="text-slate-500 font-medium mr-1 text-[11px] sm:text-xs w-full sm:w-auto">Preset targets:</span>
+        <button type="button" onclick="loadPreset('vulnerable')" class="px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 font-medium transition flex items-center space-x-1.5 whitespace-nowrap text-xs">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0"></span>
+          <span>Unpatched PHP 8.2</span>
+        </button>
+        <button type="button" onclick="loadPreset('patched')" class="px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-medium transition flex items-center space-x-1.5 whitespace-nowrap text-xs">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0"></span>
+          <span>Patched PHP 8.3</span>
+        </button>
+        <button type="button" onclick="loadPreset('waf')" class="px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 font-medium transition flex items-center space-x-1.5 whitespace-nowrap text-xs">
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-600 shrink-0"></span>
+          <span>Cloudflare WAF</span>
+        </button>
+        <button type="button" onclick="loadPreset('static405')" class="px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 font-medium transition flex items-center space-x-1.5 whitespace-nowrap text-xs">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+          <span>HTTP 405 (No POST)</span>
+        </button>
+        <button type="button" onclick="loadPreset('vulnweb')" class="px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 font-medium transition flex items-center space-x-1.5 whitespace-nowrap text-xs">
+          <span class="w-1.5 h-1.5 rounded-full bg-purple-600 shrink-0"></span>
+          <span>Acunetix VulnWeb</span>
+        </button>
+      </div>
+
+      <!-- The Scan Form (Bulletproof: Zero Refresh on Click or Enter) -->
+      <form id="auditForm" onsubmit="event.preventDefault(); handleScanSubmit(event); return false;" class="space-y-4 sm:space-y-5">
+        <div>
+          <div class="relative flex rounded-xl shadow-sm">
+            <span class="inline-flex items-center px-3 sm:px-4 rounded-l-xl border border-r-0 border-slate-300 bg-slate-50 text-slate-500 text-[11px] sm:text-xs font-semibold shrink-0">
+              https://
+            </span>
+            <input 
+              type="text" 
+              id="targetUrl" 
+              name="url" 
+              required 
+              placeholder="your-website.com" 
+              class="flex-1 min-w-0 block w-full px-3 py-3 sm:px-4 sm:py-3.5 rounded-none rounded-r-xl text-slate-900 border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-base sm:text-sm font-medium transition"
+            >
+          </div>
+          <p class="mt-2 text-[11px] sm:text-xs text-slate-400 flex items-center space-x-1.5">
+            <i class="fa-solid fa-lock text-slate-400 shrink-0"></i>
+            <span>Localhost and RFC 1918 private IP addresses are automatically blocked by SSRF gateway defense.</span>
+          </p>
+        </div>
+
+        <!-- Options & Disclaimers -->
+        <div class="space-y-3 pt-3 border-t border-slate-100">
+          <label class="flex items-start space-x-3 cursor-pointer group">
+            <input 
+              type="checkbox" 
+              id="consentCheckbox" 
+              required 
+              checked
+              class="mt-0.5 w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 transition shrink-0"
+            >
+            <span class="text-xs text-slate-600 group-hover:text-slate-900 leading-normal">
+              I own this website or have explicit authorization to test it.
+            </span>
+          </label>
+
+          <!-- Deep Crash Probe Toggle -->
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-3.5 space-y-1.5">
+            <label class="flex items-start space-x-3 cursor-pointer">
+              <input 
+                type="checkbox" 
+                id="deepProbeCheckbox" 
+                class="mt-0.5 w-4 h-4 text-amber-600 bg-white border-slate-300 rounded focus:ring-amber-500 transition shrink-0"
+              >
+              <div class="text-xs">
+                <span class="font-bold text-slate-800">Need a deeper check? (Optional)</span>
+                <p class="text-slate-500 mt-0.5 leading-normal text-[11px] sm:text-xs">
+                  The optional check sends up to 16 MiB of progressive multipart data to evaluate worker longjmp recovery. Run only with permission and outside peak hours.
+                </p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Submit Button (type=button ensures ZERO page reload) -->
+        <button 
+          type="button" 
+          id="submitScanBtn"
+          onclick="handleScanSubmit(event);"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 sm:py-4 px-6 rounded-xl transition shadow-md shadow-blue-600/20 flex items-center justify-center space-x-2 text-sm sm:text-base cursor-pointer whitespace-nowrap active:scale-[0.99]"
+        >
+          <i class="fa-solid fa-radar" id="btnIcon"></i>
+          <span id="btnLabel">Check website</span>
+        </button>
+      </form>
+
+      <!-- Security Guard Disclaimers -->
+      <div class="flex flex-wrap items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-100 gap-2">
+        <span class="flex items-center space-x-1.5"><i class="fa-solid fa-shield text-emerald-500"></i> <span>No worker-crashing test unless you opt in</span></span>
+        <span class="flex items-center space-x-1.5"><i class="fa-solid fa-clock text-blue-500"></i> <span>Five-minute safety limit</span></span>
+        <span class="flex items-center space-x-1.5"><i class="fa-solid fa-database text-slate-400"></i> <span>Zero payload data retention</span></span>
+      </div>
+
+    </div>
+
+    <!-- Live Telemetry & Execution Pipeline (Revealed during or after scan) -->
+    <div id="scanDashboard" class="hidden space-y-6">
+      
+      <!-- Stepper Matrix -->
+      <div class="card-flat p-4 sm:p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-list-check text-blue-600"></i>
+            <h3 class="text-xs font-semibold text-slate-700">Inspection pipeline progress</h3>
+          </div>
+          <span class="text-xs text-slate-500" id="scanElapsed">Elapsed: 0.0s</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          
+          <div id="stepCard1" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50 space-y-1 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-slate-400">Stage 1</span>
+              <span id="stepIcon1"><i class="fa-regular fa-circle text-slate-300"></i></span>
+            </div>
+            <div class="text-xs font-bold text-slate-800">SSRF and DNS gate</div>
+            <div class="text-xs text-slate-500 truncate" id="stepLog1">Waiting…</div>
+          </div>
+
+          <div id="stepCard2" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50 space-y-1 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-slate-400">Stage 2</span>
+              <span id="stepIcon2"><i class="fa-regular fa-circle text-slate-300"></i></span>
+            </div>
+            <div class="text-xs font-bold text-slate-800">Server fingerprint</div>
+            <div class="text-xs text-slate-500 truncate" id="stepLog2">Waiting…</div>
+          </div>
+
+          <div id="stepCard3" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50 space-y-1 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-slate-400">Stage 3</span>
+              <span id="stepIcon3"><i class="fa-regular fa-circle text-slate-300"></i></span>
+            </div>
+            <div class="text-xs font-bold text-slate-800">Control multipart</div>
+            <div class="text-xs text-slate-500 truncate" id="stepLog3">Waiting…</div>
+          </div>
+
+          <div id="stepCard4" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50 space-y-1 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-slate-400">Stage 4</span>
+              <span id="stepIcon4"><i class="fa-regular fa-circle text-slate-300"></i></span>
+            </div>
+            <div class="text-xs font-bold text-slate-800">Adaptive heap probe</div>
+            <div class="text-xs text-slate-500 truncate" id="stepLog4">Waiting…</div>
+          </div>
+
+        </div>
+
+        <!-- Telemetry Memory Bar -->
+        <div class="pt-2 space-y-1.5">
+          <div class="flex justify-between text-xs text-slate-600 font-medium">
+            <span>Audit Stage & Probe Escalation Progress:</span>
+            <span class="font-bold text-slate-900" id="heapPercent">0%</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
+            <div id="heapBar" class="bg-blue-600 h-2 rounded-full transition-opacity duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Terminal Console -->
+      <div class="card-flat overflow-hidden">
+        <div class="bg-slate-100 px-4 py-2 border-b border-slate-200 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+            <span class="text-xs font-semibold text-slate-700 ml-2">Audit execution trail</span>
+          </div>
+          <button onclick="clearLogs()" class="text-xs text-slate-500 hover:text-slate-800 whitespace-nowrap">Clear</button>
+        </div>
+        <pre id="terminalBody" class="p-3.5 sm:p-4 font-mono text-[11px] sm:text-xs text-slate-700 space-y-1 max-h-56 overflow-y-auto bg-slate-50/60 leading-relaxed whitespace-pre-wrap break-all sm:break-normal"><samp class="text-slate-400">// Engine initialized. Ready to record audit signals.</samp></pre>
+      </div>
+
+      <!-- Executive Vulnerability Report Card -->
+      <div id="finalReportCard" class="hidden card-premium p-4 sm:p-8 space-y-6">
+        
+        <!-- Verdict Banner -->
+        <div id="verdictBanner" class="rounded-xl p-4 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Target Metadata Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 py-3 border-y border-slate-100 text-xs">
+          <div class="min-w-0">
+            <div class="text-slate-500 font-medium text-xs">Resolved address</div>
+            <div class="font-bold text-slate-800 mt-0.5 truncate" id="reportIp">192.0.2.1</div>
+          </div>
+          <div class="min-w-0">
+            <div class="text-slate-500 font-medium text-xs">Server banner</div>
+            <div class="font-bold text-slate-800 mt-0.5 truncate" id="reportBanner">nginx + PHP-FPM</div>
+          </div>
+          <div class="min-w-0">
+            <div class="text-slate-500 font-medium text-xs">Threat rating</div>
+            <div class="font-bold text-red-600 mt-0.5 truncate">CVE-2026-109618</div>
+          </div>
+          <div class="min-w-0">
+            <div class="text-slate-500 font-medium text-xs">CVSS base score</div>
+            <div class="font-bold text-slate-800 mt-0.5 flex items-center space-x-1">
+              <span class="px-2 py-0.5 rounded bg-red-100 text-red-700 font-extrabold text-xs">9.2 Critical</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Remediation Accordion -->
+        <div class="space-y-3">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-wrench text-blue-600"></i>
+            <h3 class="text-xs font-semibold text-slate-700">Recommended server mitigations</h3>
+          </div>
+
+          <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+            <div class="flex border-b border-slate-200 bg-white text-xs font-semibold overflow-x-auto scrollbar-none">
+              <button onclick="switchTab('nginx')" id="tab-nginx" class="px-3.5 py-2.5 sm:px-4 border-r border-slate-200 text-blue-600 bg-blue-50 font-bold focus:outline-none whitespace-nowrap shrink-0">Nginx Proxy</button>
+              <button onclick="switchTab('apache')" id="tab-apache" class="px-3.5 py-2.5 sm:px-4 border-r border-slate-200 text-slate-600 hover:text-slate-900 focus:outline-none whitespace-nowrap shrink-0">Apache HTTPD</button>
+              <button onclick="switchTab('php')" id="tab-php" class="px-3.5 py-2.5 sm:px-4 border-r border-slate-200 text-slate-600 hover:text-slate-900 focus:outline-none whitespace-nowrap shrink-0">PHP Packages</button>
+              <button onclick="switchTab('docker')" id="tab-docker" class="px-3.5 py-2.5 sm:px-4 text-slate-600 hover:text-slate-900 focus:outline-none whitespace-nowrap shrink-0">Docker Patch</button>
+            </div>
+            <!-- Dedicated snippet toolbar so copy button never covers code on mobile -->
+            <div class="bg-slate-100 px-3.5 py-1.5 border-b border-slate-200 flex items-center justify-between text-xs">
+              <span class="text-slate-500 font-mono text-[11px]">Mitigation directive</span>
+              <button onclick="copySnippet()" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs px-2.5 py-1 rounded-md shadow-sm font-medium transition flex items-center space-x-1 whitespace-nowrap">
+                <i class="fa-regular fa-copy"></i>
+                <span id="copyBtnText">Copy</span>
+              </button>
+            </div>
+            <div class="p-3.5 sm:p-4 overflow-x-auto">
+              <pre id="codeSnippet" class="font-mono text-xs text-slate-800 leading-relaxed"></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shareable Permalink -->
+        <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="flex items-center space-x-2 min-w-0">
+            <i class="fa-solid fa-link text-blue-600 shrink-0"></i>
+            <span class="font-semibold text-slate-700 shrink-0">Permanent Audit Link:</span>
+            <span id="permalinkText" class="text-blue-700 font-medium truncate">https://PHPscanner.tezhost.com/report/generate</span>
+          </div>
+          <button onclick="copyPermalink()" class="px-3 py-1 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 transition whitespace-nowrap shrink-0">
+            Copy Link
+          </button>
+        </div>
+
+        <!-- Export Actions -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+          <span class="text-xs text-slate-400">
+            <i class="fa-regular fa-circle-check text-emerald-500 mr-1"></i> Recorded with cryptographic checksum ID.
+          </span>
+          <div class="flex space-x-2">
+            <button onclick="window.print()" class="flex-1 sm:flex-initial px-4 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition whitespace-nowrap text-center">
+              <i class="fa-solid fa-print mr-1.5"></i> Print / PDF
+            </button>
+            <button onclick="downloadJsonReport()" class="flex-1 sm:flex-initial px-4 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition shadow-sm whitespace-nowrap text-center">
+              <i class="fa-solid fa-download mr-1.5"></i> Download JSON
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Recent Global Community Scans -->
+    <div class="card-flat p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-clock-rotate-left text-blue-600"></i>
+          <h3 class="text-xs font-semibold text-slate-700">Recent global audits</h3>
+        </div>
+        <span class="text-xs text-slate-400">Live ledger activity</span>
+      </div>
+      <div id="recentScansGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+        <!-- Populated via JS -->
+      </div>
+    </div>
+
+  </main>
+
+
+  <!-- ==================== VIEW 2: SERVER CONFIG AUDITOR ==================== -->
+  <main id="view-auditor" class="view-panel hidden flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8">
+    <div class="max-w-2xl">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Server configuration auditor</h1>
+      <p class="mt-2 text-slate-600 text-xs sm:text-sm">
+        Paste your Nginx (<code class="bg-slate-100 px-1 py-0.5 rounded">nginx.conf</code>), Apache (<code class="bg-slate-100 px-1 py-0.5 rounded">httpd.conf</code>), or PHP (<code class="bg-slate-100 px-1 py-0.5 rounded">php.ini</code>) directives to automatically evaluate your server’s resilience against multipart buffer exhaustion.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Left Config Input (7 cols) -->
+      <div class="lg:col-span-7 card-premium p-4 sm:p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <label class="text-xs font-semibold text-slate-700">Select server type</label>
+          <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
+            <button type="button" onclick="loadSampleConfig('nginx')" class="text-blue-600 hover:underline whitespace-nowrap">Sample Nginx</button>
+            <span class="text-slate-300">|</span>
+            <button type="button" onclick="loadSampleConfig('apache')" class="text-blue-600 hover:underline whitespace-nowrap">Sample Apache</button>
+            <span class="text-slate-300">|</span>
+            <button type="button" onclick="loadSampleConfig('php')" class="text-blue-600 hover:underline whitespace-nowrap">Sample PHP</button>
+          </div>
+        </div>
+
+        <select id="configTypeSelect" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold rounded-lg px-3 py-2.5 focus:ring-blue-500">
+          <option value="nginx">Nginx (nginx.conf / sites-enabled)</option>
+          <option value="apache">Apache HTTPD (httpd.conf / .htaccess)</option>
+          <option value="php">PHP Core (php.ini / php-fpm.conf)</option>
+        </select>
+
+        <textarea 
+          id="configTextInput" 
+          rows="10" 
+          placeholder="Paste your configuration here..." 
+          class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3.5 sm:p-4 font-mono text-base sm:text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        ></textarea>
+
+        <button 
+          type="button" 
+          onclick="runConfigAudit()" 
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 sm:py-3 px-6 rounded-xl transition shadow-md shadow-blue-600/20 text-xs sm:text-sm flex items-center justify-center space-x-2 whitespace-nowrap active:scale-[0.99]"
+        >
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>Analyze Configuration</span>
+        </button>
+      </div>
+
+      <!-- Right Audit Results (5 cols) -->
+      <div class="lg:col-span-5 space-y-4">
+        <div id="configAuditEmpty" class="card-flat p-8 text-center text-slate-400 space-y-3">
+          <i class="fa-solid fa-code text-4xl text-slate-300"></i>
+          <h2 class="text-sm font-semibold text-slate-700">No analysis performed yet</h2>
+          <p class="text-xs">Click one of the sample buttons on the left or paste your configuration to review your security rating.</p>
+        </div>
+
+        <div id="configAuditResult" class="hidden card-premium p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <span class="text-xs font-medium text-slate-500">Security score</span>
+              <div class="text-3xl font-black text-slate-900" id="configScoreVal">85/100</div>
+            </div>
+            <div id="configStatusBadge" class="px-3 py-1 rounded-full text-xs font-semibold">
+              Secure
+            </div>
+          </div>
+
+          <div class="space-y-3" id="configFindingsList">
+            <!-- Findings populated via JS -->
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-xs text-slate-400">Tezhost Configuration Analysis Engine</span>
+            <button type="button" onclick="downloadConfigReport()" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold transition whitespace-nowrap">
+              Export Audit
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+
+  <!-- ==================== VIEW 3: ASSETNOTE PAYLOAD LAB ==================== -->
+  <main id="view-payload" class="view-panel hidden flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8">
+    <div class="max-w-2xl">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Assetnote payload generator</h1>
+      <p class="mt-2 text-slate-600 text-xs sm:text-sm">
+        Generate custom Assetnote-compliant recursive multipart form payloads for authorized pen-testing, bug bounty verification, and internal server stress checks.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Controls (5 cols) -->
+      <div class="lg:col-span-5 card-premium p-4 sm:p-6 space-y-4 sm:space-y-5">
+        <h2 class="text-xs font-semibold text-slate-700">Payload parameters</h2>
+
+        <div>
+          <div class="flex justify-between text-xs font-semibold text-slate-700 mb-1">
+            <span>Recursion Depth:</span>
+            <span id="depthValLabel" class="text-blue-600 font-semibold">62 Levels</span>
+          </div>
+          <input type="range" id="depthRange" min="1" max="64" value="62" oninput="updatePayloadParams()" class="w-full accent-blue-600 h-6">
+          <p class="text-[11px] sm:text-xs text-slate-400 mt-1">Assetnote demonstrated that 62 levels triggers memory allocation exhaustion in vulnerable runtimes.</p>
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs font-semibold text-slate-700 mb-1">
+            <span>Padding Size:</span>
+            <span id="sizeValLabel" class="text-blue-600 font-semibold">2048 KB (2.0 MB)</span>
+          </div>
+          <input type="range" id="sizeRange" min="100" max="25000" step="500" value="2048" oninput="updatePayloadParams()" class="w-full accent-blue-600 h-6">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Custom Boundary String:</label>
+          <input type="text" id="boundaryInput" value="----TezhostSecurityProbe" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-base sm:text-xs font-mono">
+        </div>
+
+        <button onclick="requestPayloadGeneration()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 sm:py-2.5 rounded-xl text-xs sm:text-sm transition whitespace-nowrap active:scale-[0.99]">
+          Generate payload
+        </button>
+      </div>
+
+      <!-- Generated Outputs (7 cols) -->
+      <div class="lg:col-span-7 card-premium p-4 sm:p-6 space-y-4">
+        <div class="flex border-b border-slate-200 text-xs font-semibold overflow-x-auto scrollbar-none">
+          <button onclick="switchPayloadTab('curl')" id="ptab-curl" class="px-3.5 py-2 text-blue-600 border-b-2 border-blue-600 font-bold whitespace-nowrap shrink-0">cURL Command</button>
+          <button onclick="switchPayloadTab('python')" id="ptab-python" class="px-3.5 py-2 text-slate-500 hover:text-slate-800 whitespace-nowrap shrink-0">Python Script</button>
+          <button onclick="switchPayloadTab('raw')" id="ptab-raw" class="px-3.5 py-2 text-slate-500 hover:text-slate-800 whitespace-nowrap shrink-0">Raw Preview</button>
+        </div>
+
+        <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+          <div class="bg-slate-100 px-3.5 py-1.5 border-b border-slate-200 flex items-center justify-between text-xs">
+            <span class="text-slate-500 font-mono text-[11px]" id="payloadFormatLabel">payload.sh</span>
+            <div class="flex items-center space-x-1.5">
+              <button type="button" onclick="downloadPayloadScript()" class="bg-white border border-slate-200 text-xs px-2.5 py-1 rounded-md text-slate-700 font-medium hover:bg-slate-100 shadow-sm whitespace-nowrap">
+                <span>Download</span>
+              </button>
+              <button type="button" onclick="copyPayloadCode()" class="bg-white border border-slate-200 text-xs px-2.5 py-1 rounded-md text-slate-700 font-medium hover:bg-slate-100 shadow-sm whitespace-nowrap">
+                <span id="copyPayloadBtnText">Copy</span>
+              </button>
+            </div>
+          </div>
+          <div class="p-3.5 overflow-x-auto">
+            <pre id="payloadCodeOutput" class="font-mono text-xs text-slate-800 max-h-80 leading-relaxed"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+
+  <!-- ==================== VIEW 4: CVE INTEL & ADVISORY ==================== -->
+  <main id="view-cve" class="view-panel hidden flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8">
+    <div class="max-w-2xl">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Understanding PHP2Shell (CVE-2026-109618)</h1>
+      <p class="mt-2 text-slate-600 text-xs sm:text-sm">
+        A deep technical breakdown of how multipart form handling and longjmp memory bailouts create use-after-free conditions in persistent PHP worker environments.
+      </p>
+    </div>
+
+    <!-- Threat Breakdown Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+      <div class="card-premium p-4 sm:p-6 space-y-3">
+        <span class="px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800">CVE-2026-109618</span>
+        <h2 class="text-base font-bold text-slate-900">Multipart Array Key Memory Exhaustion</h2>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          When parsing <code class="bg-slate-100 px-1 py-0.5 rounded">multipart/form-data</code> with nested bracket parameters (e.g. <code class="bg-slate-100 px-1 py-0.5 rounded">a[b][c]...</code>), PHP recursively initializes hash tables in heap memory. When the process hits <code class="bg-slate-100 px-1 py-0.5 rounded">memory_limit</code>, the execution aborts via <code class="bg-slate-100 px-1 py-0.5 rounded">zend_bailout()</code>.
+        </p>
+      </div>
+
+      <div class="card-premium p-4 sm:p-6 space-y-3">
+        <span class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800">CVE-2026-109619</span>
+        <h2 class="text-base font-bold text-slate-900">Persistent Worker Dangling Pointer / RCE</h2>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          In persistent environments like <strong>PHP-FPM</strong> and <strong>mod_php</strong>, workers do not restart after each HTTP request. The bailout leaves uncleaned pointers in global structures. An attacker sending subsequent requests can overwrite freed heap memory to achieve unauthenticated Remote Code Execution.
+        </p>
+      </div>
+    </div>
+
+    <!-- Version Matrix Table -->
+    <div class="card-flat overflow-hidden">
+      <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+        <h2 class="text-sm font-bold text-slate-900">Affected PHP Versions and Patch Status Matrix</h2>
+        <span class="text-xs text-slate-400">Official PHP Team Advisory</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
+            <tr>
+              <th class="p-3 font-semibold">PHP Branch</th>
+              <th class="p-3 font-semibold">Vulnerable Releases</th>
+              <th class="p-3 font-semibold">Official Patched Version</th>
+              <th class="p-3 font-semibold">Risk Rating</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-slate-700">
+            <tr>
+              <td class="p-3 font-bold text-slate-900">PHP 8.2</td>
+              <td class="p-3 text-red-600 font-mono">8.2.0 to 8.2.34</td>
+              <td class="p-3 text-emerald-600 font-bold font-mono">8.2.35+</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded bg-red-50 text-red-700 font-bold">Critical</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 font-bold text-slate-900">PHP 8.3</td>
+              <td class="p-3 text-red-600 font-mono">8.3.0 to 8.3.35</td>
+              <td class="p-3 text-emerald-600 font-bold font-mono">8.3.36+</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded bg-red-50 text-red-700 font-bold">Critical</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 font-bold text-slate-900">PHP 8.4</td>
+              <td class="p-3 text-red-600 font-mono">8.4.0 to 8.4.26</td>
+              <td class="p-3 text-emerald-600 font-bold font-mono">8.4.27+</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded bg-red-50 text-red-700 font-bold">Critical</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 font-bold text-slate-900">PHP 8.1 & Older</td>
+              <td class="p-3 text-red-600 font-mono">All versions (End-of-Life)</td>
+              <td class="p-3 text-amber-600 font-bold">Upgrade to 8.2+</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold">EOL Exposed</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+
+  <!-- ==================== VIEW 5: REMEDIATION & TEZHOST SCRIPTS ==================== -->
+  <main id="view-remediation" class="view-panel hidden flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8">
+    <div class="max-w-2xl">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Server remediation scripts</h1>
+      <p class="mt-2 text-slate-600 text-xs sm:text-sm">
+        Instant deployment scripts and configuration directives to protect Tezhost VPS, Dedicated, cPanel, and Docker nodes.
+      </p>
+    </div>
+
+    <div class="card-premium overflow-hidden">
+      <div class="flex border-b border-slate-200 bg-slate-50 text-xs font-semibold overflow-x-auto scrollbar-none">
+        <button onclick="switchRemediationTab('nginx')" id="rtab-nginx" class="px-3.5 py-2.5 sm:px-4 sm:py-3 text-blue-600 bg-white border-r border-slate-200 font-bold whitespace-nowrap shrink-0">Nginx Reverse Proxy</button>
+        <button onclick="switchRemediationTab('apache')" id="rtab-apache" class="px-3.5 py-2.5 sm:px-4 sm:py-3 text-slate-600 hover:text-slate-900 border-r border-slate-200 whitespace-nowrap shrink-0">Apache HTTPD</button>
+        <button onclick="switchRemediationTab('php')" id="rtab-php" class="px-3.5 py-2.5 sm:px-4 sm:py-3 text-slate-600 hover:text-slate-900 border-r border-slate-200 whitespace-nowrap shrink-0">Ubuntu / Debian Apt</button>
+        <button onclick="switchRemediationTab('cpanel')" id="rtab-cpanel" class="px-3.5 py-2.5 sm:px-4 sm:py-3 text-slate-600 hover:text-slate-900 whitespace-nowrap shrink-0">cPanel / WHM Servers</button>
+      </div>
+
+      <!-- Dedicated Toolbar for Clean Mobile Ergonomics -->
+      <div class="bg-slate-100 px-3.5 py-2 border-b border-slate-200 flex items-center justify-between text-xs">
+        <span class="text-slate-500 font-mono text-[11px]" id="remediationFileTag">nginx.conf</span>
+        <button onclick="copyRemediationSnippet()" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs px-2.5 py-1 rounded-md shadow-sm font-medium transition flex items-center space-x-1 whitespace-nowrap">
+          <i class="fa-regular fa-copy"></i>
+          <span id="copyRemediationBtnText">Copy Directive</span>
+        </button>
+      </div>
+
+      <div class="p-3.5 sm:p-6 overflow-x-auto">
+        <pre id="remediationSnippetPre" class="font-mono text-xs text-slate-800 leading-relaxed"></pre>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== VIEW 6: TRUST BADGE GENERATOR ==================== -->
+  <main id="view-badge" class="view-panel hidden flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8">
+    <div class="max-w-2xl">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">PHP2Shell security trust badge</h1>
+      <p class="mt-2 text-slate-600 text-xs sm:text-sm">
+        Show visitors that your infrastructure is audited and protected against PHP2Shell vulnerabilities by embedding a live dynamic SVG badge in your footer or GitHub repository.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div class="lg:col-span-5 card-premium p-4 sm:p-6 space-y-4">
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Enter verified domain</label>
+        <input type="text" id="badgeDomainInput" value="your-domain.com" oninput="updateBadgePreview()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-base sm:text-xs font-mono">
+        
+        <label class="block text-xs font-semibold text-slate-700 mt-2 mb-1">Security status</label>
+        <select id="badgeStatusSelect" onchange="updateBadgePreview()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-base sm:text-xs font-semibold">
+          <option value="protected">Protected / Verified (Green)</option>
+          <option value="vulnerable">Exposed / Action Required (Red)</option>
+        </select>
+      </div>
+
+      <div class="lg:col-span-7 card-premium p-4 sm:p-6 space-y-4">
+        <div class="border border-slate-200 rounded-xl p-4 sm:p-6 bg-slate-50 flex items-center justify-center">
+          <img id="badgeLiveImg" src="/api/badge/your-domain.com.svg?status=protected" alt="Tezhost Shield Badge" class="h-6 max-w-full">
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-xs font-semibold text-slate-600">Markdown embed code</label>
+            <button type="button" onclick="copyBadgeMarkdown()" id="btnCopyBadgeMd" class="text-xs text-blue-600 hover:underline whitespace-nowrap">Copy</button>
+          </div>
+          <input type="text" id="badgeMarkdownCode" readonly class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 font-mono text-base sm:text-xs text-slate-700">
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-xs font-semibold text-slate-600">HTML embed code</label>
+            <button type="button" onclick="copyBadgeHtml()" id="btnCopyBadgeHtml" class="text-xs text-blue-600 hover:underline whitespace-nowrap">Copy</button>
+          </div>
+          <input type="text" id="badgeHtmlCode" readonly class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 font-mono text-base sm:text-xs text-slate-700">
+        </div>
+      </div>
+    </div>
+  </main>
+
+
+  <!-- ==================== VIEW 7: API & CI/CD PIPELINE ==================== -->
+  <main id="view-api" class="view-panel hidden flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8">
+    <div class="max-w-2xl">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">API documentation and CI/CD security gate</h1>
+      <p class="mt-2 text-slate-600 text-xs sm:text-sm">
+        Integrate automated PHP2Shell vulnerability scans directly into your GitHub Actions, GitLab CI, or Jenkins deployment workflows.
+      </p>
+    </div>
+
+    <div class="card-premium p-4 sm:p-6 space-y-5 sm:space-y-6">
+      <div>
+        <h2 class="text-sm font-bold text-slate-900">1. Programmatic Scan Endpoint (JSON)</h2>
+        <p class="text-xs text-slate-500 mt-1">Initiate synchronous security inspection:</p>
+        <pre class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 font-mono text-xs text-slate-800 mt-2 overflow-x-auto">
+curl -X POST "https://PHPscanner.tezhost.com/api/scan" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "consent": true, "run_crash_probe": false}'
+        </pre>
+      </div>
+
+      <div>
+        <h2 class="text-sm font-bold text-slate-900">2. GitHub Actions Automated Deployment Workflow</h2>
+        <p class="text-xs text-slate-500 mt-1">Add to <code class="bg-slate-100 px-1 py-0.5 rounded">.github/workflows/security-audit.yml</code>:</p>
+        <pre class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 font-mono text-xs text-slate-800 mt-2 overflow-x-auto">
+name: PHP2Shell Security Audit
+on: [push, deployment_status]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Audit Production Server via Tezhost Engine
+        run: |
+          RESPONSE=$(curl -s -X POST "https://PHPscanner.tezhost.com/api/scan" \
+            -H "Content-Type: application/json" \
+            -d '{"url": "https://${{ secrets.PROD_DOMAIN }}", "consent": true}')
+          echo "Audit result: $RESPONSE"
+          if echo "$RESPONSE" | grep -q '"vulnerable":true'; then
+            echo "Critical Security Vulnerability Detected!"
+            exit 1
+          fi
+        </pre>
+      </div>
+    </div>
+  </main>
+
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-8 px-4 sm:px-6 lg:px-8 mt-auto">
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <div class="flex items-center space-x-2">
+        <span class="font-bold text-slate-900">Tezhost Technologies</span>
+        <span>• Enterprise Web Hosting, Dedicated Servers, & Security Infrastructure</span>
+      </div>
+      <div class="flex space-x-6">
+        <a href="https://tezhost.com" target="_blank" class="hover:text-blue-600">Tezhost Home</a>
+        <a href="https://github.com/assetnote/php2shell-scanner" target="_blank" class="hover:text-blue-600">Assetnote Research</a>
+        <button onclick="navigateTo('cve')" class="hover:text-blue-600">CVE Advisories</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== COMPLETE SELF-CONTAINED JAVASCRIPT ENGINE ==================== -->
+  <script>
+    // Global State
+    let currentAuditResult = null;
+    let scanTimer = null;
+    let scanStartTime = null;
+
+    // Sample Configs
+    const sampleConfigs = {
+      nginx: `# Nginx Vulnerable Example
+server {
+    listen 80;
+    server_name example.com;
+
+    # Warning: client_max_body_size is missing!
+    # Defaults to unlimited or allows excessive multipart uploads
+
+    location ~ \\.php$ {
+        include fastcgi_params;
+        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+    }
+}`,
+      apache: `# Apache Vulnerable Example
+<VirtualHost *:80>
+    ServerName example.com
+    DocumentRoot /var/www/html
+
+    # Missing LimitRequestBody directive
+    # Worker will accept large nested multipart POST requests
+</VirtualHost>`,
+      php: `; PHP php.ini Example
+memory_limit = 256M
+post_max_size = 64M
+upload_max_filesize = 32M
+
+; Dangerous: max_input_nesting_level is at default 64
+; Allows Assetnote 62-level recursive attack
+max_input_nesting_level = 64`
+    };
+
+    // Remediation Snippets
+    const remediationSnippets = {
+      nginx: `# Mitigation via Nginx Reverse Proxy (Recommended by Tezhost)
+# In your /etc/nginx/conf.d/default.conf or nginx.conf:
+
+server {
+    listen 80;
+    server_name example.com;
+
+    # Restrict total multipart request size
+    client_max_body_size 10M;
+    client_body_buffer_size 128k;
+
+    # Protect against excessive header recursion
+    client_header_buffer_size 1k;
+    large_client_header_buffers 4 8k;
+
+    location ~ \\.php$ {
+        include fastcgi_params;
+        fastcgi_pass unix:/run/php/php-fpm.sock;
+        # Mitigate persistent worker leaks by limiting buffer
+        fastcgi_buffer_size 16k;
+        fastcgi_buffers 4 16k;
+    }
+}`,
+      apache: `# Mitigation via Apache HTTPD / mod_security
+# Add to httpd.conf or .htaccess:
+
+# Restrict maximum POST request body to 10MB
+LimitRequestBody 10485760
+
+# If using mod_security:
+<IfModule security2_module>
+    SecRuleEngine On
+    SecRule REQUEST_HEADERS:Content-Type "multipart/form-data" \\
+        "id:990100,phase:1,deny,status:400,chain,msg:'Tezhost Guard: Excessive nested multipart structure'" \\
+        "t:none,rx .*\\[.*\\[.*\\["
+</IfModule>`,
+      php: `# Official PHP Engine Upgrades
+# Check and upgrade to official patched releases:
+# PHP 8.2 -> 8.2.35+
+# PHP 8.3 -> 8.3.36+
+# PHP 8.4 -> 8.4.27+
+# PHP 8.5 -> 8.5.12+
+
+# Ubuntu / Debian
+sudo apt-get update
+sudo apt-get --only-upgrade install php8.2-fpm php8.3-fpm php8.4-fpm
+
+# Verify patched version
+php -v
+
+# Restart PHP-FPM Service
+sudo systemctl restart php*-fpm`,
+      cpanel: `# cPanel / WHM Servers
+# 1. Login to WHM as root
+# 2. Navigate to: Software -> EasyApache 4
+# 3. Ensure PHP packages are updated to:
+#    ea-php82 (8.2.35+)
+#    ea-php83 (8.3.36+)
+#
+# 4. In WHM Service Configuration -> Apache Configuration -> Include Editor:
+#    Add to Pre-Main Include:
+LimitRequestBody 10485760`
+    };
+
+    // View Navigation Router
+    function navigateTo(viewId) {
+      if (!viewId) viewId = "scanner";
+      const views = ["scanner", "auditor", "payload", "cve", "remediation", "badge", "api"];
+      if (!views.includes(viewId)) viewId = "scanner";
+      
+      views.forEach(function(v) {
+        const el = document.getElementById("view-" + v);
+        const navBtn = document.getElementById("nav-" + v);
+        
+        if (el) {
+          if (v === viewId) {
+            el.classList.remove("hidden");
+            el.style.display = "block";
+          } else {
+            el.classList.add("hidden");
+            el.style.display = "none";
+          }
+        }
+        
+        if (navBtn) {
+          if (v === viewId) {
+            navBtn.className = "px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg nav-pill-active border border-transparent transition whitespace-nowrap flex items-center space-x-1.5 shrink-0";
+            try {
+              navBtn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+            } catch(e) {}
+          } else {
+            navBtn.className = "px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent transition whitespace-nowrap flex items-center space-x-1.5 shrink-0";
+          }
+        }
+      });
+
+      if (history.pushState) {
+        history.pushState(null, null, '#' + viewId);
+      } else {
+        location.hash = '#' + viewId;
+      }
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      if (viewId === "badge") updateBadgePreview();
+      if (viewId === "payload") updatePayloadParams();
+    }
+    window.navigateTo = navigateTo;
+
+    // Presets Loader
+    function loadPreset(type) {
+      const urlInput = document.getElementById("targetUrl");
+      const deepProbe = document.getElementById("deepProbeCheckbox");
+
+      if (type === "vulnerable") {
+        if (urlInput) urlInput.value = "https://unpatched-legacy-php.internal-test.net";
+        if (deepProbe) deepProbe.checked = true;
+      } else if (type === "patched") {
+        if (urlInput) urlInput.value = "https://tezhost.com";
+        if (deepProbe) deepProbe.checked = false;
+      } else if (type === "waf") {
+        if (urlInput) urlInput.value = "https://cloudflare-protected.security-audit.org";
+        if (deepProbe) deepProbe.checked = false;
+      } else if (type === "static405") {
+        if (urlInput) urlInput.value = "https://get-only-static.internal-test.net";
+        if (deepProbe) deepProbe.checked = false;
+      } else if (type === "vulnweb") {
+        if (urlInput) urlInput.value = "http://testphp.vulnweb.com/login.php";
+        if (deepProbe) deepProbe.checked = false;
+      }
+
+      handleScanSubmit(null);
+    }
+    window.loadPreset = loadPreset;
+
+    // Scanner Execution Core
+    async function handleScanSubmit(e) {
+      if (e && e.preventDefault) e.preventDefault();
+
+      try {
+        const urlInputEl = document.getElementById("targetUrl");
+        if (!urlInputEl) return false;
+        let urlInput = urlInputEl.value.trim();
+
+        const consentEl = document.getElementById("consentCheckbox");
+        const consent = consentEl ? consentEl.checked : true;
+
+        const deepProbeEl = document.getElementById("deepProbeCheckbox");
+        const deepProbe = deepProbeEl ? deepProbeEl.checked : false;
+
+        if (!urlInput) {
+          alert("Please enter a website URL or domain name (e.g. tezhost.com).");
+          return false;
+        }
+
+        if (!consent) {
+          alert("Authorization consent is required.");
+          return false;
+        }
+
+        if (!urlInput.startsWith("http://") && !urlInput.startsWith("https://")) {
+          urlInput = "https://" + urlInput;
+        }
+
+        startScanUI();
+        appendLog("INFO", "Registering audit job with Tezhost security engine...");
+
+        let scanId = null;
+        let sseConnected = false;
+        let pollInterval = null;
+
+        try {
+          // Step 1: Start genuine asynchronous scan job on backend
+          const startRes = await fetch("/api/scan/start", {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json",
+              "Bypass-Tunnel-Reminder": "true"
+            },
+            body: JSON.stringify({ url: urlInput, consent: true, run_crash_probe: deepProbe })
+          });
+
+          if (!startRes.ok) {
+            const err = await startRes.json();
+            endScanUI();
+            appendLog("CRIT", err.detail || "Scan request rejected by gateway.");
+            alert("Audit Notice: " + (err.detail || "Scan request rejected."));
+            return false;
+          }
+
+          const startData = await startRes.json();
+          scanId = startData.scan_id;
+          appendLog("INFO", `Audit Job registered [ID: ${scanId.substring(0, 8)}]. Initiating live stream...`);
+
+          // Step 2: Connect via SSE with full cookie credentials
+          const streamUrl = `/api/scan/stream?scan_id=${encodeURIComponent(scanId)}&url=${encodeURIComponent(urlInput)}&consent=true&run_crash=${deepProbe}`;
+          const eventSource = new EventSource(streamUrl, { withCredentials: true });
+
+          eventSource.onmessage = (event) => {
+            sseConnected = true;
+            try {
+              const payload = JSON.parse(event.data);
+              handleStreamPayload(payload);
+              if (payload.event === "complete" || payload.event === "error") {
+                eventSource.close();
+              }
+            } catch (err) {
+              console.error("Payload parse error:", err);
+            }
+          };
+
+          eventSource.onerror = () => {
+            eventSource.close();
+            if (!sseConnected) {
+              appendLog("INFO", "SSE proxy buffer detected. Polling real backend telemetry (GET /api/scan/status)...");
+              startRealTelemetryPolling(scanId);
+            }
+          };
+
+        } catch (netErr) {
+          endScanUI();
+          appendLog("CRIT", "Network communication failure: " + netErr.message);
+        }
+      } catch (err) {
+        console.error("Scan error:", err);
+      }
+
+      return false;
+    }
+    window.handleScanSubmit = handleScanSubmit;
+
+    // Genuine Real-Time Poller (Zero Faking - Queries Real Backend State)
+    function startRealTelemetryPolling(scanId) {
+      let loggedCount = 0;
+      let isCompleted = false;
+
+      const pollTimer = setInterval(async () => {
+        if (isCompleted) {
+          clearInterval(pollTimer);
+          return;
+        }
+
+        try {
+          const res = await fetch(`/api/scan/status/${encodeURIComponent(scanId)}`, {
+            headers: { "Bypass-Tunnel-Reminder": "true" }
+          });
+
+          if (!res.ok) return;
+          const data = await res.json();
+
+          // 1. Update Real Step States from Backend
+          if (data.steps) {
+            for (let stepId = 1; stepId <= 4; stepId++) {
+              const stepInfo = data.steps[stepId] || data.steps[String(stepId)];
+              if (stepInfo) {
+                updateStep(stepId, stepInfo.status, stepInfo.log);
+              }
+            }
+          }
+
+          // 2. Update Real Simulated Heap Pressure from Backend
+          if (data.heap_pressure !== undefined) {
+            setHeap(data.heap_pressure);
+          }
+
+          // 3. Append New Real Backend Logs
+          if (data.logs && data.logs.length > loggedCount) {
+            for (let i = loggedCount; i < data.logs.length; i++) {
+              appendLog("STEP", data.logs[i]);
+            }
+            loggedCount = data.logs.length;
+          }
+
+          // 4. Completed or Failed Real Termination
+          if (data.status === "completed" && data.result) {
+            isCompleted = true;
+            clearInterval(pollTimer);
+            endScanUI();
+            renderFinalReport(data.result);
+            loadRecentScans();
+          } else if (data.status === "failed") {
+            isCompleted = true;
+            clearInterval(pollTimer);
+            endScanUI();
+            const errMsg = data.error || "Inspection encountered a failure on target.";
+            appendLog("CRIT", errMsg);
+            alert("Audit Notice: " + errMsg);
+          }
+
+        } catch (pollErr) {
+          console.warn("Polling error:", pollErr);
+        }
+      }, 1500);
+    }
+
+    function setHeap(value) {
+      const hp = document.getElementById("heapPercent");
+      const hb = document.getElementById("heapBar");
+      const num = Math.min(Math.max(parseInt(value) || 0, 0), 100);
+      if (hp) hp.textContent = `${num}%`;
+      if (hb) {
+        hb.style.width = `${num}%`;
+        if (num >= 85) {
+          hb.className = "bg-red-600 h-2 rounded-full transition-all duration-300";
+        } else if (num >= 60) {
+          hb.className = "bg-amber-500 h-2 rounded-full transition-all duration-300";
+        } else {
+          hb.className = "bg-blue-600 h-2 rounded-full transition-all duration-300";
+        }
+      }
+    }
+    window.setHeap = setHeap;
+
+    function updateStep(stepId, status, log) {
+      let mappedState = "pending";
+      if (status === "running") mappedState = "running";
+      else if (status === "success" || status === "passed") mappedState = "success";
+      else if (status === "flagged" || status === "failed") mappedState = "flagged";
+      setStepState(stepId, mappedState, log);
+    }
+    window.updateStep = updateStep;
+
+    function startScanUI() {
+      const dash = document.getElementById("scanDashboard");
+      if (dash) {
+        dash.classList.remove("hidden");
+        dash.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      const finalReport = document.getElementById("finalReportCard");
+      if (finalReport) finalReport.classList.add("hidden");
+
+      for (let i = 1; i <= 4; i++) {
+        setStepState(i, "pending", "Waiting in queue...");
+      }
+
+      const submitBtn = document.getElementById("submitScanBtn");
+      const btnLabel = document.getElementById("btnLabel");
+      const btnIcon = document.getElementById("btnIcon");
+      if (submitBtn) submitBtn.disabled = true;
+      if (btnLabel) btnLabel.textContent = "Audit in progress...";
+      if (btnIcon) btnIcon.className = "fa-solid fa-spinner fa-spin";
+
+      const heapBar = document.getElementById("heapBar");
+      if (heapBar) {
+        heapBar.style.width = "25%";
+        heapBar.className = "bg-blue-600 h-2 rounded-full transition-opacity duration-300";
+      }
+
+      const heapPercent = document.getElementById("heapPercent");
+      if (heapPercent) heapPercent.textContent = "25%";
+
+      scanStartTime = Date.now();
+      if (scanTimer) clearInterval(scanTimer);
+      scanTimer = setInterval(() => {
+        const elapsed = ((Date.now() - scanStartTime) / 1000).toFixed(1);
+        const scanElapsed = document.getElementById("scanElapsed");
+        if (scanElapsed) scanElapsed.textContent = `Elapsed: ${elapsed}s`;
+      }, 100);
+
+      appendLog("INFO", "Initiating audit workflow pipeline...");
+    }
+
+    function endScanUI() {
+      const submitBtn = document.getElementById("submitScanBtn");
+      const btnLabel = document.getElementById("btnLabel");
+      const btnIcon = document.getElementById("btnIcon");
+      if (submitBtn) submitBtn.disabled = false;
+      if (btnLabel) btnLabel.textContent = "Check website";
+      if (btnIcon) btnIcon.className = "fa-solid fa-radar";
+
+      if (scanTimer) clearInterval(scanTimer);
+    }
+
+    function setStepState(stepNum, state, message) {
+      const card = document.getElementById(`stepCard${stepNum}`);
+      const icon = document.getElementById(`stepIcon${stepNum}`);
+      const log = document.getElementById(`stepLog${stepNum}`);
+
+      if (log && message) log.textContent = message;
+
+      if (card && icon) {
+        if (state === "pending") {
+          card.className = "border border-slate-200 rounded-xl p-3.5 bg-slate-50 space-y-1 transition";
+          icon.innerHTML = '<i class="fa-regular fa-circle text-slate-300"></i>';
+        } else if (state === "running") {
+          card.className = "border border-blue-300 rounded-xl p-3.5 bg-blue-50/50 space-y-1 transition";
+          icon.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-blue-600"></i>';
+        } else if (state === "success") {
+          card.className = "border border-emerald-300 rounded-xl p-3.5 bg-emerald-50/50 space-y-1 transition";
+          icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600"></i>';
+        } else if (state === "flagged") {
+          card.className = "border border-red-300 rounded-xl p-3.5 bg-red-50/50 space-y-1 transition";
+          icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-600"></i>';
+        }
+      }
+    }
+
+    function handleStreamPayload(data) {
+      if (!data) return;
+      if (data.event === "init") {
+        if (data.scan_id) {
+          appendLog("INFO", `Real-time stream telemetry engaged [Scan: ${data.scan_id.substring(0, 8)}]`);
+        }
+        return;
+      }
+      if (data.event === "step") {
+        const id = data.step_id;
+        const log = data.log || "";
+        updateStep(id, data.status, log);
+        if (data.status === "running") {
+          appendLog("INFO", log);
+          setHeap(id * 24);
+        } else if (data.status === "success") {
+          appendLog("PASS", log);
+          setHeap(id * 25);
+        } else if (data.status === "flagged") {
+          appendLog("CRIT", log);
+          setHeap(Math.max(id * 25, 95));
+        }
+      } else if (data.event === "complete") {
+        setHeap(100);
+        endScanUI();
+        renderFinalReport(data.data);
+        loadRecentScans();
+      } else if (data.event === "error") {
+        endScanUI();
+        appendLog("CRIT", data.log);
+        alert("Audit Notice: " + data.log);
+      }
+    }
+
+    async function loadReportById(scanId) {
+      if (!scanId) return;
+      try {
+        const res = await fetch(`/api/reports/${encodeURIComponent(scanId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          navigateTo("scanner");
+          renderFinalReport(data);
+          const dash = document.getElementById("scanDashboard");
+          if (dash) dash.classList.remove("hidden");
+          const reportCard = document.getElementById("finalReportCard");
+          if (reportCard) {
+            reportCard.classList.remove("hidden");
+            reportCard.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
+      } catch (err) {
+        console.error("Error loading report by ID:", err);
+      }
+    }
+    window.loadReportById = loadReportById;
+
+    function renderFinalReport(data) {
+      currentAuditResult = data;
+      const reportCard = document.getElementById("finalReportCard");
+      const verdictBanner = document.getElementById("verdictBanner");
+      if (!reportCard || !verdictBanner) return;
+
+      const rIp = document.getElementById("reportIp");
+      if (rIp) rIp.textContent = data.resolved_ip || "Public IP";
+
+      const rBanner = document.getElementById("reportBanner");
+      if (rBanner) rBanner.textContent = data.server_banner || "Protected";
+
+      const permalink = window.location.origin + '/report/' + (data.scan_id || data.id || 'verified');
+      const pText = document.getElementById("permalinkText");
+      if (pText) pText.textContent = permalink;
+
+      if (data.status === "inconclusive") {
+        const title = data.vulnerability_type || "Scan Inconclusive";
+        let desc = "The target endpoint could not process the baseline multipart request. Memory exhaustion testing could not be completed on this specific route.";
+        let tag = "Method Blocked";
+        if (title.includes("404")) {
+          desc = "The remote host returned <strong>HTTP 404 Not Found</strong> on the baseline multipart POST request. This specific path does not accept form submissions. Please audit an active endpoint that processes form data or executes PHP scripts (e.g. <code>/index.php</code>, <code>/contact.php</code>, or <code>/login.php</code>).";
+          tag = "HTTP 404 / Not Found";
+        } else if (title.includes("405")) {
+          desc = "The remote host returned <strong>HTTP 405 Method Not Allowed</strong>. The web server or reverse proxy strictly disallows POST submissions on this path. Please specify an endpoint that allows POST requests.";
+          tag = "HTTP 405 / No POST";
+        } else if (title.includes("401") || title.includes("403")) {
+          desc = "The baseline request was blocked by an Ingress WAF, authentication barrier, or access control list (HTTP 401/403). The underlying PHP engine could not be reached.";
+          tag = "WAF / ACL Filtered";
+        }
+
+        verdictBanner.className = "rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-amber-50 border border-amber-200 text-amber-900";
+        verdictBanner.innerHTML = `
+          <div class="space-y-1">
+            <div class="inline-flex items-center space-x-2 text-xs font-semibold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>Scan Inconclusive</span>
+            </div>
+            <h3 class="text-xl font-extrabold text-amber-950">${escapeHtml(title)}</h3>
+            <p class="text-xs text-amber-800 max-w-2xl leading-relaxed">
+              ${desc}
+            </p>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-amber-200 text-center shadow-sm min-w-[140px]">
+            <div class="text-xs font-medium text-slate-400">Verdict</div>
+            <div class="text-xl font-black text-amber-600">Inconclusive</div>
+            <div class="text-xs font-semibold text-amber-600">${tag}</div>
+          </div>
+        `;
+      } else if (data.vulnerable) {
+        verdictBanner.className = "rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-red-50 border border-red-200 text-red-900";
+        verdictBanner.innerHTML = `
+          <div class="space-y-1">
+            <div class="inline-flex items-center space-x-2 text-xs font-semibold text-red-700 bg-red-100 px-2.5 py-0.5 rounded-full">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>Critical Vulnerability Confirmed</span>
+            </div>
+            <h3 class="text-xl font-extrabold text-red-950">Target is Exposed to PHP2Shell Exploitation</h3>
+            <p class="text-xs text-red-800 max-w-2xl leading-relaxed">
+              The remote server revealed out-of-memory worker failure when handling 62-level recursive multipart arrays. An unauthenticated attacker may trigger use-after-free conditions leading to remote code execution (RCE).
+            </p>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-red-200 text-center shadow-sm min-w-[140px]">
+            <div class="text-xs font-medium text-slate-400">CVSS Severity</div>
+            <div class="text-2xl font-black text-red-600">9.2</div>
+            <div class="text-xs font-semibold text-red-500">Critical</div>
+          </div>
+        `;
+      } else {
+        verdictBanner.className = "rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-emerald-50 border border-emerald-200 text-emerald-900";
+        verdictBanner.innerHTML = `
+          <div class="space-y-1">
+            <div class="inline-flex items-center space-x-2 text-xs font-semibold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+              <i class="fa-solid fa-shield-halved"></i>
+              <span>No Vulnerability Detected</span>
+            </div>
+            <h3 class="text-xl font-extrabold text-emerald-950">Target Infrastructure is Protected</h3>
+            <p class="text-xs text-emerald-800 max-w-2xl leading-relaxed">
+              The remote host rejected or safely processed the progressive multipart memory exhaustion probes without worker termination or memory leaks.
+            </p>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-emerald-200 text-center shadow-sm min-w-[140px]">
+            <div class="text-xs font-medium text-slate-400">Status</div>
+            <div class="text-xl font-black text-emerald-600">Secure</div>
+            <div class="text-xs font-semibold text-emerald-500">Patched / Filtered</div>
+          </div>
+        `;
+      }
+
+      switchTab("nginx");
+      reportCard.classList.remove("hidden");
+      reportCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function switchTab(tab) {
+      const tabs = ["nginx", "apache", "php", "docker"];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        if (btn) {
+          if (t === tab) {
+            btn.className = "px-4 py-2.5 border-r border-slate-200 text-blue-600 bg-blue-50 font-bold focus:outline-none whitespace-nowrap";
+          } else {
+            btn.className = "px-4 py-2.5 border-r border-slate-200 text-slate-600 hover:text-slate-900 focus:outline-none whitespace-nowrap";
+          }
+        }
+      });
+      const pre = document.getElementById("codeSnippet");
+      if (pre) pre.textContent = remediationSnippets[tab] || remediationSnippets.nginx;
+    }
+    window.switchTab = switchTab;
+
+    function copySnippet() {
+      const pre = document.getElementById("codeSnippet");
+      if (pre) {
+        navigator.clipboard.writeText(pre.textContent).then(() => {
+          const btn = document.getElementById("copyBtnText");
+          if (btn) {
+            btn.textContent = "Copied!";
+            setTimeout(() => btn.textContent = "Copy", 2000);
+          }
+        });
+      }
+    }
+    window.copySnippet = copySnippet;
+
+    function copyPermalink() {
+      const permalink = document.getElementById("permalinkText").textContent;
+      navigator.clipboard.writeText(permalink).then(() => {
+        alert("Audit permalink copied to clipboard: " + permalink);
+      });
+    }
+    window.copyPermalink = copyPermalink;
+
+    function appendLog(level, message) {
+      const terminal = document.getElementById("terminalBody");
+      if (!terminal) return;
+      const line = document.createElement("div");
+      const time = new Date().toISOString().substring(11, 19);
+
+      let badgeColor = "text-blue-600 font-bold";
+      if (level === "WARN") badgeColor = "text-amber-600 font-bold";
+      if (level === "CRIT") badgeColor = "text-red-600 font-bold";
+      if (level === "PASS") badgeColor = "text-emerald-600 font-bold";
+      if (level === "STEP") badgeColor = "text-indigo-600 font-bold";
+
+      line.innerHTML = `<span class="text-slate-400">[${time}]</span> <span class="${badgeColor}">[${level}]</span> <span>${escapeHtml(message)}</span>`;
+      terminal.appendChild(line);
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function clearLogs() {
+      const terminal = document.getElementById("terminalBody");
+      if (terminal) terminal.innerHTML = '<div class="text-slate-400">// Logs cleared. Ready.</div>';
+    }
+    window.clearLogs = clearLogs;
+
+    function downloadJsonReport() {
+      if (!currentAuditResult) return;
+      const jsonStr = JSON.stringify(currentAuditResult, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tezhost-php2shell-audit-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    window.downloadJsonReport = downloadJsonReport;
+
+    async function loadRecentScans() {
+      const container = document.getElementById("recentScansGrid");
+      if (!container) return;
+
+      try {
+        const res = await fetch("/api/recent-scans");
+        const scans = await res.json();
+        container.innerHTML = scans.map(s => {
+          const isVuln = s.vulnerable;
+          const isInconc = s.status === "inconclusive";
+          let badgeClass = isVuln ? "bg-red-50 text-red-700 border-red-200" : "bg-emerald-50 text-emerald-700 border-emerald-200";
+          let icon = isVuln ? "fa-triangle-exclamation text-red-500" : "fa-shield-halved text-emerald-500";
+          let text = isVuln ? "Vulnerable" : "Protected";
+          if (isInconc) {
+            badgeClass = "bg-amber-50 text-amber-800 border-amber-200";
+            icon = "fa-circle-exclamation text-amber-500";
+            text = "Inconclusive";
+          }
+          return `
+            <div onclick="loadReportById('${escapeHtml(s.id)}')" role="button" tabindex="0" class="p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white hover:border-blue-400 transition cursor-pointer flex items-center justify-between">
+              <div class="truncate mr-2">
+                <span class="font-bold text-slate-800 block truncate">${escapeHtml(s.domain)}</span>
+                <span class="text-xs text-slate-400">${s.created_at || "Recent"}</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-xs font-semibold border flex items-center space-x-1 ${badgeClass}">
+                <i class="fa-solid ${icon}"></i>
+                <span>${text}</span>
+              </span>
+            </div>
+          `;
+        }).join("");
+      } catch (e) {
+        container.innerHTML = "<div class='text-slate-400 text-xs'>Activity ledger synced.</div>";
+      }
+    }
+
+    // Config Auditor
+    function loadSampleConfig(type) {
+      const select = document.getElementById("configTypeSelect");
+      const textInput = document.getElementById("configTextInput");
+      if (select) select.value = type;
+      if (textInput) textInput.value = sampleConfigs[type] || "";
+      runConfigAudit();
+    }
+    window.loadSampleConfig = loadSampleConfig;
+
+    async function runConfigAudit() {
+      const configType = document.getElementById("configTypeSelect").value;
+      const content = document.getElementById("configTextInput").value.trim();
+
+      if (!content) {
+        alert("Please paste configuration content or click one of the sample buttons.");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/audit-config", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Bypass-Tunnel-Reminder": "true"
+          },
+          body: JSON.stringify({ config_type: configType, content })
+        });
+        const data = await res.json();
+        renderConfigAuditResults(data);
+      } catch (err) {
+        alert("Audit error: " + err.message);
+      }
+    }
+    window.runConfigAudit = runConfigAudit;
+
+    let currentConfigResult = null;
+
+    function renderConfigAuditResults(data) {
+      currentConfigResult = data;
+      const emptyCard = document.getElementById("configAuditEmpty");
+      if (emptyCard) emptyCard.classList.add("hidden");
+      const resultCard = document.getElementById("configAuditResult");
+      if (resultCard) resultCard.classList.remove("hidden");
+
+      const scoreVal = document.getElementById("configScoreVal");
+      if (scoreVal) scoreVal.textContent = `${data.score}/100`;
+
+      const badge = document.getElementById("configStatusBadge");
+      if (badge) {
+        badge.textContent = data.status;
+        if (data.score >= 80) {
+          badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800";
+        } else if (data.score >= 50) {
+          badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800";
+        } else {
+          badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800";
+        }
+      }
+
+      const list = document.getElementById("configFindingsList");
+      if (list) {
+        list.innerHTML = data.findings.map(f => {
+          let color = "border-emerald-200 bg-emerald-50 text-emerald-900";
+          let icon = "fa-check text-emerald-600";
+          if (f.severity === "CRITICAL") {
+            color = "border-red-200 bg-red-50 text-red-900";
+            icon = "fa-triangle-exclamation text-red-600";
+          } else if (f.severity === "WARNING") {
+            color = "border-amber-200 bg-amber-50 text-amber-900";
+            icon = "fa-circle-exclamation text-amber-600";
+          }
+
+          return `
+            <div class="border rounded-xl p-3.5 text-xs ${color} space-y-1">
+              <div class="flex items-center space-x-1.5 font-bold">
+                <i class="fa-solid ${icon}"></i>
+                <span>${f.param} &bull; ${f.severity}</span>
+              </div>
+              <div class="text-xs font-medium leading-relaxed">${f.issue}</div>
+              <div class="text-xs opacity-80 mt-1 font-mono">Recommendation: ${f.recommendation}</div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+
+    function downloadConfigReport() {
+      if (!currentConfigResult) {
+        alert("Run an analysis first to export the findings.");
+        return;
+      }
+      const text = `Tezhost Server Configuration Security Audit\nScore: ${currentConfigResult.score}/100\nStatus: ${currentConfigResult.status}\nType: ${currentConfigResult.config_type}\n\nFindings:\n` +
+        currentConfigResult.findings.map(f => `[${f.severity}] ${f.param}: ${f.issue}\nRecommendation: ${f.recommendation}\n`).join("\n");
+      const blob = new Blob([text], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tezhost-config-audit-${Date.now()}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    window.downloadConfigReport = downloadConfigReport;
+
+    // Payload Lab
+    let currentPayloadData = null;
+    let currentPayloadTab = "curl";
+
+    function updatePayloadParams() {
+      const depthEl = document.getElementById("depthRange");
+      const sizeEl = document.getElementById("sizeRange");
+      const depth = depthEl ? depthEl.value : 62;
+      const size = sizeEl ? sizeEl.value : 2048;
+
+      const dLabel = document.getElementById("depthValLabel");
+      if (dLabel) dLabel.textContent = `${depth} Levels`;
+      const sLabel = document.getElementById("sizeValLabel");
+      if (sLabel) sLabel.textContent = `${size} KB (${(size/1024).toFixed(1)} MB)`;
+
+      requestPayloadGeneration();
+    }
+    window.updatePayloadParams = updatePayloadParams;
+
+    async function requestPayloadGeneration() {
+      const depthEl = document.getElementById("depthRange");
+      const sizeEl = document.getElementById("sizeRange");
+      const boundEl = document.getElementById("boundaryInput");
+
+      const depth = depthEl ? parseInt(depthEl.value) : 62;
+      const size_kb = sizeEl ? parseInt(sizeEl.value) : 2048;
+      const boundary = boundEl ? boundEl.value.trim() : "----TezhostSecurityProbe";
+
+      const key = "probe" + ("[x]".repeat(depth));
+      currentPayloadData = {
+        depth: depth,
+        size_kb: size_kb,
+        boundary: boundary,
+        raw_preview: `--${boundary}\r\nContent-Disposition: form-data; name="${key}"\r\n\r\n[${size_kb} KB Recursive Array Padding Data]\r\n--${boundary}--\r\n`,
+        curl_command: `# Assetnote Safe Probe (Depth: ${depth}, Size: ${size_kb}KB)\npython -c "key='p'+'[x]'*${depth}; open('payload.bin','w').write('X'*${size_kb}*1024)"\ncurl -X POST "https://your-domain.com" \\\n  -H "Content-Type: multipart/form-data; boundary=${boundary}" \\\n  -F "${key}=@payload.bin"`,
+        python_script: `import httpx\n\n# Assetnote-compliant PHP2Shell probe\ndepth = ${depth}\nkey = 'probe' + ('[x]' * depth)\ndata = {key: 'A' * (${size_kb} * 1024)}\nheaders = {'User-Agent': 'Tezhost-PHPScanner/2.4'}\n\nwith httpx.Client(timeout=20.0, verify=False) as client:\n    response = client.post('https://your-domain.com', data=data, headers=headers)\n    print('Status:', response.status_code)`
+      };
+      displayPayloadSnippet();
+
+      try {
+        const res = await fetch("/api/generate-payload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ depth, size_kb, boundary })
+        });
+        if (res.ok) {
+          currentPayloadData = await res.json();
+          displayPayloadSnippet();
+        }
+      } catch (err) {}
+    }
+
+    function switchPayloadTab(tab) {
+      currentPayloadTab = tab;
+      ["curl", "python", "raw"].forEach(t => {
+        const btn = document.getElementById(`ptab-${t}`);
+        if (btn) {
+          if (t === tab) {
+            btn.className = "px-4 py-2 text-blue-600 border-b-2 border-blue-600 font-bold whitespace-nowrap";
+          } else {
+            btn.className = "px-4 py-2 text-slate-500 hover:text-slate-800 whitespace-nowrap";
+          }
+        }
+      });
+      displayPayloadSnippet();
+    }
+    window.switchPayloadTab = switchPayloadTab;
+
+    function displayPayloadSnippet() {
+      if (!currentPayloadData) return;
+      const pre = document.getElementById("payloadCodeOutput");
+      if (pre) {
+        if (currentPayloadTab === "curl") pre.textContent = currentPayloadData.curl_command;
+        if (currentPayloadTab === "python") pre.textContent = currentPayloadData.python_script;
+        if (currentPayloadTab === "raw") pre.textContent = currentPayloadData.raw_preview;
+      }
+    }
+
+    function copyPayloadCode() {
+      const pre = document.getElementById("payloadCodeOutput");
+      if (pre) {
+        navigator.clipboard.writeText(pre.textContent).then(() => {
+          const btn = document.getElementById("copyPayloadBtnText");
+          if (btn) {
+            btn.textContent = "Copied!";
+            setTimeout(() => btn.textContent = "Copy", 1500);
+          }
+        });
+      }
+    }
+    window.copyPayloadCode = copyPayloadCode;
+
+    function downloadPayloadScript() {
+      if (!currentPayloadData) return;
+      let filename = "php2shell_probe.sh";
+      let content = currentPayloadData.curl_command;
+      if (currentPayloadTab === "python") {
+        filename = "php2shell_probe.py";
+        content = currentPayloadData.python_script;
+      } else if (currentPayloadTab === "raw") {
+        filename = "php2shell_multipart.raw";
+        content = currentPayloadData.raw_preview;
+      }
+      const blob = new Blob([content], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    window.downloadPayloadScript = downloadPayloadScript;
+
+    // Trust Badge
+    function updateBadgePreview() {
+      const domainInput = document.getElementById("badgeDomainInput");
+      const domain = domainInput ? domainInput.value.trim() || "tezhost.com" : "tezhost.com";
+      const origin = window.location.origin;
+      const badgeUrl = `${origin}/api/badge/${encodeURIComponent(domain)}.svg`;
+
+      const img = document.getElementById("badgeLiveImg");
+      if (img) img.src = `/api/badge/${encodeURIComponent(domain)}.svg?_t=${Date.now()}`;
+
+      const mdInput = document.getElementById("badgeMarkdownCode");
+      if (mdInput) mdInput.value = `[![Tezhost Audit Verified](${badgeUrl})](${origin})`;
+
+      const htmlInput = document.getElementById("badgeHtmlCode");
+      if (htmlInput) htmlInput.value = `<a href="${origin}"><img src="${badgeUrl}" alt="Tezhost Security Audit Verified" /></a>`;
+    }
+    window.updateBadgePreview = updateBadgePreview;
+
+    function copyBadgeMarkdown() {
+      const input = document.getElementById("badgeMarkdownCode");
+      if (!input) return;
+      navigator.clipboard.writeText(input.value).then(() => {
+        const btn = document.getElementById("btnCopyBadgeMd");
+        if (btn) {
+          btn.textContent = "Copied!";
+          setTimeout(() => btn.textContent = "Copy", 1500);
+        }
+      });
+    }
+    window.copyBadgeMarkdown = copyBadgeMarkdown;
+
+    function copyBadgeHtml() {
+      const input = document.getElementById("badgeHtmlCode");
+      if (!input) return;
+      navigator.clipboard.writeText(input.value).then(() => {
+        const btn = document.getElementById("btnCopyBadgeHtml");
+        if (btn) {
+          btn.textContent = "Copied!";
+          setTimeout(() => btn.textContent = "Copy", 1500);
+        }
+      });
+    }
+    window.copyBadgeHtml = copyBadgeHtml;
+
+    // Remediation View Tabs
+    function switchRemediationTab(tab) {
+      const tabs = ["nginx", "apache", "php", "cpanel"];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`rtab-${t}`);
+        if (btn) {
+          if (t === tab) {
+            btn.className = "px-4 py-3 text-blue-600 bg-white border-r border-slate-200 font-bold whitespace-nowrap";
+          } else {
+            btn.className = "px-4 py-3 text-slate-600 hover:text-slate-900 border-r border-slate-200 whitespace-nowrap";
+          }
+        }
+      });
+      const pre = document.getElementById("remediationSnippetPre");
+      if (pre) pre.textContent = remediationSnippets[tab] || remediationSnippets.nginx;
+    }
+    window.switchRemediationTab = switchRemediationTab;
+
+    function copyRemediationSnippet() {
+      const pre = document.getElementById("remediationSnippetPre");
+      if (pre) {
+        navigator.clipboard.writeText(pre.textContent).then(() => {
+          const btn = document.getElementById("copyRemediationBtnText");
+          if (btn) {
+            btn.textContent = "Copied!";
+            setTimeout(() => btn.textContent = "Copy Directive", 2000);
+          }
+        });
+      }
+    }
+    window.copyRemediationSnippet = copyRemediationSnippet;
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function sleep(ms) {
+      return new Promise(r => setTimeout(r, ms));
+    }
+
+    async function checkAndLoadReport() {
+      let scanId = null;
+      const path = window.location.pathname;
+      if (path.includes("/report/")) {
+        scanId = path.split("/report/")[1].split("/")[0].split("?")[0];
+      } else if (window.location.hash.startsWith("#report/")) {
+        scanId = window.location.hash.split("#report/")[1].split("/")[0];
+      }
+      if (scanId) {
+        loadReportById(scanId);
+      }
+    }
+
+    // App Initializer
+    function initApp() {
+      switchRemediationTab("nginx");
+      switchTab("nginx");
+      loadRecentScans();
+      checkAndLoadReport();
+      const initialHash = window.location.hash.replace("#", "");
+      if (initialHash && !initialHash.startsWith("report/")) {
+        navigateTo(initialHash);
+      } else if (!window.location.pathname.includes("/report/")) {
+        navigateTo("scanner");
+      }
+    }
+
+    window.addEventListener("hashchange", function() {
+      const h = window.location.hash.replace("#", "");
+      if (h) {
+        if (h.startsWith("report/")) {
+          loadReportById(h.split("/")[1]);
+        } else {
+          navigateTo(h);
+        }
+      }
+    });
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initApp);
+    } else {
+      initApp();
+    }
+  </script>
+</body>
+</html>

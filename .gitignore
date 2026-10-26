@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*$py.class
+phpscanner.db
+.hallmark/
+cloudflared.exe
+.env
+.venv
+env/
+venv/
+.pytest_cache/
